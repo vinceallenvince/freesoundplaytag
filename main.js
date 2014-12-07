@@ -38,7 +38,7 @@ function getSounds(tag, page) {
 
 function playSounds(data) {
 
-  console.log('received ' + data.previews.length + ' sounds.');
+  console.log('received ' + data.previews.length + ' previews.');
 
   previews = data.previews;
 

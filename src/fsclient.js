@@ -33,6 +33,8 @@ FSClient.prototype.getSounds = function(opt_tag, opt_page) {
 
 FSClient.prototype.doneGetSounds = function(data) {
 
+  console.log('fetching ' + data.data.results.length + ' of ' + data.data.count + ' total sounds...');
+
   var deferred = Q.defer();
 
   var results = data.data.results;
