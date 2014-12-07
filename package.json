@@ -1,0 +1,11 @@
+{
+  "name": "freesoundplaytag",
+  "version": "0.1.0",
+  "description": "Plays sounds from freesound based on tags.",
+  "main": "main.js",
+  "dependencies": {
+    "express": "^4.10.4",
+    "player": "^0.3.0",
+    "request": "^2.49.0"
+  }
+}
