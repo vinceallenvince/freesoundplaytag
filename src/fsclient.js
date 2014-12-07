@@ -11,7 +11,9 @@ FSClient.prototype.init = function(apikey) {
 };
 
 FSClient.prototype.getSounds = function(opt_tag, opt_page) {
-  console.log('getting sounds...');
+
+  console.log('getting sound ids...');
+
   var deferred = Q.defer();
 
   var tag = opt_tag || "bark";
