@@ -35,27 +35,14 @@ FSClient.prototype.getSounds = function() {
 
   console.log('getting sound ids...');
 
-  var deferred = Q.defer();
-
   var endpoint = "search/text/";
   var query = "?query=" + this.tag + "&page=" + this.page;
 
   Q.fcall(this.makeQuery.bind(this, endpoint, query)).
-  then(this.doneGetSounds.bind(this)). // rename handleGetSoundIds // TODO: doneGetSounds should return a promise; getPreviewsAll should be next call
+  then(this.doneGetSounds.bind(this)). // TODO: rename handleGetSoundIds
   then(this.getPreviewsAll.bind(this)).
-  then(function(data) {
-    console.log('here!');
-    console.log(data);
-  }).
-  fail(this.fail).
+  fail(this.fail.bind(this)).
   done(this.playSounds.bind(this));
-
-  /*Q.fcall(this.makeQuery.bind(this, endpoint, query)).
-  done(this.doneGetSounds.bind(this)).
-  fail(this.fail.bind(this));*/
-  //done(this.doneGetPreviewsAll.bind(this, deferred));
-
-  return deferred.promise;
 };
 
 /**
@@ -101,7 +88,6 @@ FSClient.prototype.doneGetSounds = function(data) {
     soundIds: soundIds
   });
 
-  //this.getPreviewsAll(soundIds, deferred);
   return deferred.promise;
 };
 
@@ -122,25 +108,27 @@ FSClient.prototype.getPreviewsAll = function(data) {
   var allPromise = Q.all(promises);
   allPromise.
     then(this.handleGetPreviewsAll.bind(this, deferred)).
-    fail(this.fail.bind(this));
+    fail(this.fail.bind(this)).
+    done(function(data) {
+      deferred.resolve({
+        data: data
+      });
+    });
 
   return deferred.promise;
 };
 
 FSClient.prototype.handleGetPreviewsAll = function(deferred, data) {
+
   var previews = [];
   for (var i = 0, max = data.length; i < max; i++) {
     previews.push(data[i].data.previews["preview-lq-mp3"]);
   }
+
   deferred.resolve({
     previews: previews
   });
-};
 
-FSClient.prototype.doneGetPreviewsAll = function(deferred, data) {
-  deferred.resolve({
-    previews: data.previews
-  });
 };
 
 FSClient.prototype.makeQuery = function(endpoint, query) {
