@@ -1,38 +1,90 @@
 var Q = require('q');
 var request = require('request');
+var Player = require('player');
 
+/**
+ * Creates a new FSClient. An FSClient makes queries against
+ * the freesound.org api and plays sounds based on the results.
+ * @constructor
+ */
 function FSClient() {
   this.baseURL = "http://www.freesound.org/apiv2/";
+  this.page = 1;
+  this.previews = null;
+  this.player = null;
 }
 
-FSClient.prototype.init = function(apikey) {
+/**
+ * Initializes an instance of FSClient.
+ * @param {string} apikey A freesound.org api key.
+ * @param {string} [opt_tag='bark'] A freesounds tag describing sounds.
+ * @param {number} [opt_page=1] The initial page of returned results.
+ */
+FSClient.prototype.init = function(apikey, opt_tag, opt_page) {
   if (!apikey) throw new Error('FSClient.init requires apikey argument.');
   this.apikey = apikey;
+  this.tag = opt_tag || "bark";
+  this.page = opt_page || 1;
+
 };
 
-FSClient.prototype.getSounds = function(opt_tag, opt_page) {
+/**
+ * Construct a query to retrieve sounds ids.
+ */
+FSClient.prototype.getSounds = function() {
 
   console.log('getting sound ids...');
 
   var deferred = Q.defer();
 
-  var tag = opt_tag || "bark";
   var endpoint = "search/text/";
-  var page = opt_page || 1;
-  var query = "?query=" + tag + "&page=" + page;
+  var query = "?query=" + this.tag + "&page=" + this.page;
 
   Q.fcall(this.makeQuery.bind(this, endpoint, query)).
-  then(this.doneGetSounds.bind(this)).
-  fail(this.fail.bind(this)).
-  done(function(data) {
-    deferred.resolve({
-      previews: data.previews
-    })
-  });
+  then(this.doneGetSounds.bind(this)). // rename handleGetSoundIds // TODO: doneGetSounds should return a promise; getPreviewsAll should be next call
+  then(this.getPreviewsAll.bind(this)).
+  then(function(data) {
+    console.log('here!');
+    console.log(data);
+  }).
+  fail(this.fail).
+  done(this.playSounds.bind(this));
+
+  /*Q.fcall(this.makeQuery.bind(this, endpoint, query)).
+  done(this.doneGetSounds.bind(this)).
+  fail(this.fail.bind(this));*/
+  //done(this.doneGetPreviewsAll.bind(this, deferred));
 
   return deferred.promise;
 };
 
+/**
+ * If a Player instance does not exist, creates a new Player instance
+ * with the passed data as a list of preview urls. If player exists,
+ * the function appends the previews to the current playlist.
+ * @param {Object} data An a array of preview urls.
+ */
+FSClient.prototype.playSounds = function(data) {
+  if (!data) throw Error('playSounds requires data.');
+
+  console.log('received ' + data.previews.length + ' previews.');
+
+  var previews = data.previews;
+
+  if (!this.player) {
+    this.player = new Player(previews);
+    this.addPlayerEvents();
+  } else {
+    this.player.add(previews);
+  }
+
+  this.player.play(this.handlePlaylistEnd.bind(this));
+};
+
+/**
+ * Iterates over passed data and creates a list of soundIds.
+ * @param {Object} data Response from freesound api.
+ */
 FSClient.prototype.doneGetSounds = function(data) {
 
   console.log('fetching ' + data.data.results.length + ' of ' + data.data.count + ' total sounds...');
@@ -44,11 +96,20 @@ FSClient.prototype.doneGetSounds = function(data) {
   for (var i = 0, max = results.length; i < max; i++) {
     soundIds.push(results[i].id);
   }
-  this.getPreviewsAll(soundIds, deferred);
+
+  deferred.resolve({
+    soundIds: soundIds
+  });
+
+  //this.getPreviewsAll(soundIds, deferred);
   return deferred.promise;
 };
 
-FSClient.prototype.getPreviewsAll = function(soundIds, deferred) {
+FSClient.prototype.getPreviewsAll = function(data) {
+
+  var deferred = Q.defer();
+
+  var soundIds = data.soundIds;
   var promises = [];
   for (var i = 0, max = soundIds.length; i < max; i++) {
 
@@ -62,6 +123,8 @@ FSClient.prototype.getPreviewsAll = function(soundIds, deferred) {
   allPromise.
     then(this.handleGetPreviewsAll.bind(this, deferred)).
     fail(this.fail.bind(this));
+
+  return deferred.promise;
 };
 
 FSClient.prototype.handleGetPreviewsAll = function(deferred, data) {
@@ -74,7 +137,14 @@ FSClient.prototype.handleGetPreviewsAll = function(deferred, data) {
   });
 };
 
+FSClient.prototype.doneGetPreviewsAll = function(deferred, data) {
+  deferred.resolve({
+    previews: data.previews
+  });
+};
+
 FSClient.prototype.makeQuery = function(endpoint, query) {
+  console.log(endpoint);
   var deferred = Q.defer();
   var key = "&token=" + this.apikey;
   request(this.baseURL + endpoint + query + key, this.handleMakeQuery.bind(this, deferred));
@@ -92,8 +162,26 @@ FSClient.prototype.handleMakeQuery = function(deferred, error, response, body) {
   }
 };
 
+FSClient.prototype.handlePlaylistEnd = function(error) {
+  console.log('all songs play end');
+  this.page++; // TODO: check if we've reached the last page
+  this.getSounds();
+};
+
+FSClient.prototype.addPlayerEvents = function() {
+  this.player.on('playing', this.handlePlayerPlaying);
+  this.player.on('error', this.handlePlayerError);
+};
+
+FSClient.prototype.handlePlayerPlaying = function(song) {
+  console.log('playing: ' + song.src);
+};
+
+FSClient.prototype.handlePlayerError = function(error) {
+  console.log(error);
+};
+
 FSClient.prototype.fail = function(error) {
-  console.log('FAIL!');
   console.log(error);
 };
 

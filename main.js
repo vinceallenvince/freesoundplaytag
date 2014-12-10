@@ -1,3 +1,4 @@
+var config = require('./config');
 var Q = require('q');
 var express = require('express');
 var app = express();
@@ -18,25 +19,25 @@ var server = app.listen(3000, function () {
 });
 
 //
-var API_KEY = "f374d3f2ba6edc42051212d1f84268f02a63e222";
+var API_KEY = config.API_KEY;
 
-var Player = require('player');
 var FSClient = require('./src/fsclient');
 
-var previews;
-var tag = "dogs";
+//var previews;
+var tag = config.tag;
 var page = 1;
 
 var fsc = new FSClient();
-fsc.init(API_KEY);
+fsc.init(API_KEY, tag, page);
+fsc.getSounds();
 
-function getSounds(tag, page) {
+/*function getSounds(tag, page) {
   Q.fcall(fsc.getSounds.bind(fsc, tag, page)).
   fail(fail).
   done(playSounds);
-}
+}*/
 
-function playSounds(data) {
+/*function playSounds(data) {
 
   console.log('received ' + data.previews.length + ' previews.');
 
@@ -57,12 +58,12 @@ function playSounds(data) {
   player.on('error', function(error) {
     //console.log(error);
   });
-}
+}*/
 
-function fail(error) {
+/*function fail(error) {
   console.log(error);
-}
+}*/
 
-getSounds(tag, page);
+
 
 

@@ -1,4 +1,8 @@
-.DS_Store
+## FOLDERS
 node_modules
+coverage
 
+## FILES
+.DS_Store
+config.*
 notes.txt
