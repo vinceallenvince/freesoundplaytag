@@ -30,10 +30,12 @@ describe('FSClient', function() {
       fsc.init('123');
       expect(fsc.tag).to.equal('bark');
       expect(fsc.page).to.equal(1);
+      expect(fsc.results).to.equal(15);
 
-      fsc.init('123', 'ocean', 3);
+      fsc.init('123', 'ocean', 3, 20);
       expect(fsc.tag).to.equal('ocean');
       expect(fsc.page).to.equal(3);
+      expect(fsc.results).to.equal(20);
 
       sinon.restore(fsc.getSounds);
       sinon.restore(fsc.playSounds);
@@ -55,12 +57,13 @@ describe('FSClient', function() {
       fsc.apikey = '123';
       fsc.tag = 'santa';
       fsc.page = 3;
+      fsc.results = 15;
       fsc.getSounds();
 
       setTimeout(function() {
         expect(stubMakeQuery.calledOnce).to.be(true);
         expect(stubMakeQuery.args[0][0]).to.equal('search/text/');
-        expect(stubMakeQuery.args[0][1]).to.equal('?query=santa&page=3');
+        expect(stubMakeQuery.args[0][1]).to.equal('?query=santa&page=3&results=15');
 
         sinon.restore(fsc.makeQuery);
         sinon.restore(fsc.handleGetSounds);
@@ -124,6 +127,7 @@ describe('FSClient', function() {
       var fsc = new FSClient();
       var data = {
         data: {
+          count: 345,
           results: [
             {id: 100},
             {id: 200},
@@ -137,8 +141,7 @@ describe('FSClient', function() {
       expect(fnA).to.throwError();
 
       var promise = fsc.handleGetSounds(data);
-      // TODO: test results
-
+      expect(fsc.count).to.be(345);
     });
   });
 
@@ -159,8 +162,6 @@ describe('FSClient', function() {
       var stubHandleGetPreviewsAll = sinon.stub(fsc, 'handleGetPreviewsAll');
       var promise = fsc.getPreviewsAll(data);
       expect(stubMakeQuery.args.length).to.be(5);
-
-
     });
   });
 
@@ -243,10 +244,19 @@ describe('FSClient', function() {
       expect(fnA).to.throwError();
 
       var stubGetSounds = sinon.stub(fsc, 'getSounds');
-      fsc.page = 1;
+      fsc.page = 2;
+      fsc.count = 100;
+      fsc.results = 15;
       fsc.handlePlaylistEnd();
-      expect(fsc.page).to.be(2);
+      expect(fsc.page).to.be(3);
       expect(stubGetSounds.called).to.be(true);
+
+      fsc.page = 7;
+      fsc.count = 100;
+      fsc.results = 15;
+      fsc.handlePlaylistEnd();
+      expect(fsc.page).to.be(1);
+      expect(fsc.player).to.be(null);
 
       sinon.restore(fsc, 'getSounds');
     });

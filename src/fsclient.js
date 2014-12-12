@@ -9,9 +9,9 @@ var Player = require('player');
  */
 function FSClient() {
   this.baseURL = "http://www.freesound.org/apiv2/";
-  this.page = 1;
   this.previews = null;
   this.player = null;
+  this.count = null;
 }
 
 /**
@@ -19,12 +19,14 @@ function FSClient() {
  * @param {string} apikey A freesound.org api key.
  * @param {string} [opt_tag='bark'] A freesounds tag describing sounds.
  * @param {number} [opt_page=1] The initial page of returned results.
+ * @param {number} [opt_results=15] The total requested results.
  */
-FSClient.prototype.init = function(apikey, opt_tag, opt_page) {
+FSClient.prototype.init = function(apikey, opt_tag, opt_page, opt_results) {
   if (!apikey) throw new Error('FSClient.init requires apikey argument.');
   this.apikey = apikey;
   this.tag = opt_tag || "bark";
   this.page = opt_page || 1;
+  this.results = opt_results || 15;
 
 };
 
@@ -36,7 +38,7 @@ FSClient.prototype.getSounds = function() {
   console.log('getting sound ids...');
 
   var endpoint = "search/text/";
-  var query = "?query=" + this.tag + "&page=" + this.page;
+  var query = "?query=" + this.tag + "&page=" + this.page + "&results=" + this.results;
 
   Q.fcall(this.makeQuery.bind(this, endpoint, query)).
   then(this.handleGetSounds.bind(this)). // TODO: rename handleGetSoundIds
@@ -78,6 +80,8 @@ FSClient.prototype.handleGetSounds = function(data) {
   console.log('fetching ' + data.data.results.length + ' of ' + data.data.count + ' total sounds...');
 
   var deferred = Q.defer();
+
+  this.count = data.data.count;
 
   var results = data.data.results;
   var soundIds = [];
@@ -160,6 +164,13 @@ FSClient.prototype.makeQuery = function(endpoint, query) {
   return deferred.promise;
 };
 
+/**
+ * Checks for query errors and parses response.
+ * @param  {Object} deferred A promise.
+ * @param  {Object} error    An error.
+ * @param  {number} response A response code.
+ * @param  {string} body     Query results.
+ */
 FSClient.prototype.handleMakeQuery = function(deferred, error, response, body) {
   if (!error && response.statusCode == 200) {
     var data = JSON.parse(body);
@@ -179,7 +190,13 @@ FSClient.prototype.handleMakeQuery = function(deferred, error, response, body) {
 FSClient.prototype.handlePlaylistEnd = function(error) {
   if (error) throw new Error('handlePlaylistEnd', error);
   console.log('all songs play end');
-  this.page++; // TODO: check if we've reached the last page
+  var totalPages = Math.ceil(this.count / this.results);
+  if (this.page === totalPages) {
+    this.page = 1;
+    this.player = null;
+  } else {
+    this.page++;
+  }
   this.getSounds();
 };
 
