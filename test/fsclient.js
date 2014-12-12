@@ -30,12 +30,12 @@ describe('FSClient', function() {
       fsc.init('123');
       expect(fsc.tag).to.equal('bark');
       expect(fsc.page).to.equal(1);
-      expect(fsc.results).to.equal(15);
+      expect(fsc.page_size).to.equal(15);
 
       fsc.init('123', 'ocean', 3, 20);
       expect(fsc.tag).to.equal('ocean');
       expect(fsc.page).to.equal(3);
-      expect(fsc.results).to.equal(20);
+      expect(fsc.page_size).to.equal(20);
 
       sinon.restore(fsc.getSounds);
       sinon.restore(fsc.playSounds);
@@ -57,13 +57,13 @@ describe('FSClient', function() {
       fsc.apikey = '123';
       fsc.tag = 'santa';
       fsc.page = 3;
-      fsc.results = 15;
+      fsc.page_size = 15;
       fsc.getSounds();
 
       setTimeout(function() {
         expect(stubMakeQuery.calledOnce).to.be(true);
         expect(stubMakeQuery.args[0][0]).to.equal('search/text/');
-        expect(stubMakeQuery.args[0][1]).to.equal('?query=santa&page=3&results=15');
+        expect(stubMakeQuery.args[0][1]).to.equal('?query=santa&page=3&page_size=15');
 
         sinon.restore(fsc.makeQuery);
         sinon.restore(fsc.handleGetSounds);
@@ -246,14 +246,14 @@ describe('FSClient', function() {
       var stubGetSounds = sinon.stub(fsc, 'getSounds');
       fsc.page = 2;
       fsc.count = 100;
-      fsc.results = 15;
+      fsc.page_size = 15;
       fsc.handlePlaylistEnd();
       expect(fsc.page).to.be(3);
       expect(stubGetSounds.called).to.be(true);
 
       fsc.page = 7;
       fsc.count = 100;
-      fsc.results = 15;
+      fsc.page_size = 15;
       fsc.handlePlaylistEnd();
       expect(fsc.page).to.be(1);
       expect(fsc.player).to.be(null);

@@ -19,14 +19,14 @@ function FSClient() {
  * @param {string} apikey A freesound.org api key.
  * @param {string} [opt_tag='bark'] A freesounds tag describing sounds.
  * @param {number} [opt_page=1] The initial page of returned results.
- * @param {number} [opt_results=15] The total requested results.
+ * @param {number} [opt_page_size=15] The number of results per page.
  */
-FSClient.prototype.init = function(apikey, opt_tag, opt_page, opt_results) {
+FSClient.prototype.init = function(apikey, opt_tag, opt_page, opt_page_size) {
   if (!apikey) throw new Error('FSClient.init requires apikey argument.');
   this.apikey = apikey;
   this.tag = opt_tag || "bark";
   this.page = opt_page || 1;
-  this.results = opt_results || 15;
+  this.page_size = opt_page_size || 15;
 
 };
 
@@ -38,7 +38,7 @@ FSClient.prototype.getSounds = function() {
   console.log('getting sound ids...');
 
   var endpoint = "search/text/";
-  var query = "?query=" + this.tag + "&page=" + this.page + "&results=" + this.results;
+  var query = "?query=" + this.tag + "&page=" + this.page + "&page_size=" + this.page_size;
 
   Q.fcall(this.makeQuery.bind(this, endpoint, query)).
   then(this.handleGetSounds.bind(this)). // TODO: rename handleGetSoundIds
@@ -63,11 +63,14 @@ FSClient.prototype.playSounds = function(data) {
   if (!this.player) {
     this.player = new Player(previews);
     this.addPlayerEvents();
+    this.player.play(this.handlePlaylistEnd.bind(this));
   } else {
-    this.player.add(previews);
+    this.player.stop();
+    for (var i = 0, max = previews.length; i < max; i++) {
+      this.player.add(previews[i]);
+    }
+    this.player.play();
   }
-
-  this.player.play(this.handlePlaylistEnd.bind(this));
 };
 
 /**
@@ -77,7 +80,7 @@ FSClient.prototype.playSounds = function(data) {
 FSClient.prototype.handleGetSounds = function(data) {
   if (!data) throw Error('handleGetSounds requires data.');
 
-  console.log('fetching ' + data.data.results.length + ' of ' + data.data.count + ' total sounds...');
+  console.log('fetching ' + data.data.results.length + ' sounds. ' + data.data.count + ' total sounds.');
 
   var deferred = Q.defer();
 
@@ -190,7 +193,7 @@ FSClient.prototype.handleMakeQuery = function(deferred, error, response, body) {
 FSClient.prototype.handlePlaylistEnd = function(error) {
   if (error) throw new Error('handlePlaylistEnd', error);
   console.log('all songs play end');
-  var totalPages = Math.ceil(this.count / this.results);
+  var totalPages = Math.ceil(this.count / this.page_size);
   if (this.page === totalPages) {
     this.page = 1;
     this.player = null;
@@ -204,8 +207,8 @@ FSClient.prototype.handlePlaylistEnd = function(error) {
  * Adds events to the player.
  */
 FSClient.prototype.addPlayerEvents = function() {
-  this.player.on('playing', this.handlePlayerPlaying);
-  this.player.on('error', this.handlePlayerError);
+  this.player.on('playing', this.handlePlayerPlaying.bind(this));
+  this.player.on('error', this.handlePlayerError.bind(this));
 };
 
 /**

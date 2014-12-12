@@ -4,10 +4,11 @@ var Q = require('q');
 var API_KEY = config.apikey;
 var tag = config.tag;
 var page = 1;
+var page_size = config.page_size;
 
 var FSClient = require('./src/fsclient');
 var fsc = new FSClient();
-fsc.init(API_KEY, tag, page);
+fsc.init(API_KEY, tag, page, page_size);
 fsc.getSounds();
 
 // uncomment to create public interface
