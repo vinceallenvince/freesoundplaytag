@@ -39,7 +39,7 @@ FSClient.prototype.getSounds = function() {
   var query = "?query=" + this.tag + "&page=" + this.page;
 
   Q.fcall(this.makeQuery.bind(this, endpoint, query)).
-  then(this.doneGetSounds.bind(this)). // TODO: rename handleGetSoundIds
+  then(this.handleGetSounds.bind(this)). // TODO: rename handleGetSoundIds
   then(this.getPreviewsAll.bind(this)).
   fail(this.fail.bind(this)).
   done(this.playSounds.bind(this));
@@ -72,7 +72,8 @@ FSClient.prototype.playSounds = function(data) {
  * Iterates over passed data and creates a list of soundIds.
  * @param {Object} data Response from freesound api.
  */
-FSClient.prototype.doneGetSounds = function(data) {
+FSClient.prototype.handleGetSounds = function(data) {
+  if (!data) throw Error('handleGetSounds requires data.');
 
   console.log('fetching ' + data.data.results.length + ' of ' + data.data.count + ' total sounds...');
 
@@ -91,7 +92,15 @@ FSClient.prototype.doneGetSounds = function(data) {
   return deferred.promise;
 };
 
+/**
+ * Iterates over passed sounds ids, makes queries and joins
+ * all the returned promises.
+ * @param  {Object} data A map of properties.
+ * @return {Object}      A promise.
+ * @throws {Error} If data is not passed.
+ */
 FSClient.prototype.getPreviewsAll = function(data) {
+  if (!data) throw Error('getPreviewsAll requires data.');
 
   var deferred = Q.defer();
 
@@ -118,7 +127,14 @@ FSClient.prototype.getPreviewsAll = function(data) {
   return deferred.promise;
 };
 
+/**
+ * Iterates over passed data and builds an array
+ * of preview urls.
+ * @param  {Object} deferred A promise.
+ * @param  {Object} data     A map of properties.
+ */
 FSClient.prototype.handleGetPreviewsAll = function(deferred, data) {
+  if (!data) throw Error('handleGetPreviewsAll requires data.');
 
   var previews = [];
   for (var i = 0, max = data.length; i < max; i++) {
@@ -128,11 +144,16 @@ FSClient.prototype.handleGetPreviewsAll = function(deferred, data) {
   deferred.resolve({
     previews: previews
   });
-
 };
 
+/**
+ * Makes an api call.
+ * @param  {string} endpoint An api endpoint.
+ * @param  {string} query    A query.
+ * @return {Object}          A promise.
+ */
 FSClient.prototype.makeQuery = function(endpoint, query) {
-  console.log(endpoint);
+  if (!endpoint || !query) throw Error('makeQuery requires endpoint and query arguments.');
   var deferred = Q.defer();
   var key = "&token=" + this.apikey;
   request(this.baseURL + endpoint + query + key, this.handleMakeQuery.bind(this, deferred));
@@ -145,32 +166,61 @@ FSClient.prototype.handleMakeQuery = function(deferred, error, response, body) {
     deferred.resolve({
       data: data
     });
-  } else if (error) {
+  } else {
     deferred.reject(error);
   }
 };
 
+/**
+ * Should check page limit and make calls to
+ * get more sounds.
+ * @param  {Object} error An error object.
+ */
 FSClient.prototype.handlePlaylistEnd = function(error) {
+  if (error) throw new Error('handlePlaylistEnd', error);
   console.log('all songs play end');
   this.page++; // TODO: check if we've reached the last page
   this.getSounds();
 };
 
+/**
+ * Adds events to the player.
+ */
 FSClient.prototype.addPlayerEvents = function() {
   this.player.on('playing', this.handlePlayerPlaying);
   this.player.on('error', this.handlePlayerError);
 };
 
+/**
+ * Logs currently playing song.
+ * @param  {Object} song A map of properties representing a song.
+ */
 FSClient.prototype.handlePlayerPlaying = function(song) {
-  console.log('playing: ' + song.src);
+  this.log('playing: ' + song.src);
 };
 
+/**
+ * Logs player errors.
+ * @param  {Object} error An error object.
+ */
 FSClient.prototype.handlePlayerError = function(error) {
-  console.log(error);
+  this.log(error);
 };
 
+/**
+ * Logs query failures.
+ * @param  {Object} error An error object.
+ */
 FSClient.prototype.fail = function(error) {
-  console.log(error);
+  this.log(error);
+};
+
+/**
+ * Logs messages to the console.
+ * @param  {Object|string} msg A console message or object.
+ */
+FSClient.prototype.log = function(msg) {
+  console.log(msg);
 };
 
 module.exports = FSClient;
