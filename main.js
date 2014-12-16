@@ -1,7 +1,7 @@
 var config = require('./config');
 var Q = require('q');
 
-var API_KEY = config.apikey;
+var API_KEY = config.api_key;
 var tag = config.tag;
 var page = 1;
 var page_size = config.page_size;
