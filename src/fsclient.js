@@ -1,6 +1,9 @@
 var Q = require('q');
 var request = require('request');
 var Player = require('player');
+var fs = require('fs');
+var Log = require('log');
+var log = new Log('debug', fs.createWriteStream('fsclient.log'));
 
 /**
  * Creates a new FSClient. An FSClient makes queries against
@@ -20,14 +23,15 @@ function FSClient() {
  * @param {string} [opt_tag='bark'] A freesounds tag describing sounds.
  * @param {number} [opt_page=1] The initial page of returned results.
  * @param {number} [opt_page_size=15] The number of results per page.
+ * @param {boolean} [opt_logging=false] Set to true to enable logging.
  */
-FSClient.prototype.init = function(apikey, opt_tag, opt_page, opt_page_size) {
+FSClient.prototype.init = function(apikey, opt_tag, opt_page, opt_page_size, opt_logging) {
   if (!apikey) throw new Error('FSClient.init requires apikey argument.');
   this.apikey = apikey;
   this.tag = opt_tag || "bark";
   this.page = opt_page || 1;
   this.page_size = opt_page_size || 15;
-
+  this.logging = !!opt_logging;
 };
 
 /**
@@ -35,7 +39,7 @@ FSClient.prototype.init = function(apikey, opt_tag, opt_page, opt_page_size) {
  */
 FSClient.prototype.getSounds = function() {
 
-  console.log('getting sound ids...');
+  this.log('debug', 'getting sound ids.');
 
   var endpoint = "search/text/";
   var query = "?query=" + this.tag + "&page=" + this.page + "&page_size=" + this.page_size;
@@ -56,7 +60,7 @@ FSClient.prototype.getSounds = function() {
 FSClient.prototype.playSounds = function(data) {
   if (!data) throw Error('playSounds requires data.');
 
-  console.log('received ' + data.previews.length + ' previews.');
+  this.log('debug', 'received ' + data.previews.length + ' previews.');
 
   var previews = data.previews;
 
@@ -80,7 +84,7 @@ FSClient.prototype.playSounds = function(data) {
 FSClient.prototype.handleGetSounds = function(data) {
   if (!data) throw Error('handleGetSounds requires data.');
 
-  console.log('fetching ' + data.data.results.length + ' sounds. ' + data.data.count + ' total sounds.');
+  this.log('debug', 'fetching ' + data.data.results.length + ' sounds. ' + data.data.count + ' total sounds.');
 
   var deferred = Q.defer();
 
@@ -192,7 +196,7 @@ FSClient.prototype.handleMakeQuery = function(deferred, error, response, body) {
  */
 FSClient.prototype.handlePlaylistEnd = function(error) {
   if (error) throw new Error('handlePlaylistEnd', error);
-  console.log('all songs play end');
+  this.log('debug', 'playlist ended');
   var totalPages = Math.ceil(this.count / this.page_size);
   if (this.page === totalPages) {
     this.page = 1;
@@ -216,7 +220,7 @@ FSClient.prototype.addPlayerEvents = function() {
  * @param  {Object} song A map of properties representing a song.
  */
 FSClient.prototype.handlePlayerPlaying = function(song) {
-  this.log('playing: ' + song.src);
+  this.log('info', 'playing: ' + song.src);
 };
 
 /**
@@ -224,7 +228,7 @@ FSClient.prototype.handlePlayerPlaying = function(song) {
  * @param  {Object} error An error object.
  */
 FSClient.prototype.handlePlayerError = function(error) {
-  this.log(error);
+  this.log('error', error);
 };
 
 /**
@@ -232,15 +236,19 @@ FSClient.prototype.handlePlayerError = function(error) {
  * @param  {Object} error An error object.
  */
 FSClient.prototype.fail = function(error) {
-  this.log(error);
+  this.log('error', error);
 };
 
 /**
  * Logs messages to the console.
+ * @param  {string} type A logging type. ex: info, debug, etc.
  * @param  {Object|string} msg A console message or object.
  */
-FSClient.prototype.log = function(msg) {
-  console.log(msg);
+FSClient.prototype.log = function(type, msg) {
+  if (this.logging) {
+    log[type](msg);
+  }
+  console.log(type + ': ' + msg);
 };
 
 module.exports = FSClient;

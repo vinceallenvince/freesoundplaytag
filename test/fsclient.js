@@ -312,7 +312,7 @@ describe('FSClient', function() {
   });
 
   describe('log', function() {
-
+    // TODO: test against log module
     it('Logs messages to the console.', function() {
       var fsc = new FSClient();
       fsc.log('error!');
