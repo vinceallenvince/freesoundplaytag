@@ -11,10 +11,12 @@ var log = new Log('debug', fs.createWriteStream('fsclient.log'));
  * @constructor
  */
 function FSClient() {
-  this.baseURL = "http://www.freesound.org/apiv2/";
+  this.baseURL = 'http://www.freesound.org/apiv2/';
+  this.basePreviewURL = 'http://www.freesound.org/data/previews/'
   this.previews = null;
   this.player = null;
   this.count = null;
+  this.totalSoundsPlayed = 0;
 }
 
 /**
@@ -39,7 +41,7 @@ FSClient.prototype.init = function(apikey, opt_tag, opt_page, opt_page_size, opt
  */
 FSClient.prototype.getSounds = function() {
 
-  this.log('debug', 'getting sound ids.');
+  this.log('debug', 'getting sound ids');
 
   var endpoint = "search/text/";
   var query = "?query=" + this.tag + "&page=" + this.page + "&page_size=" + this.page_size;
@@ -60,7 +62,7 @@ FSClient.prototype.getSounds = function() {
 FSClient.prototype.playSounds = function(data) {
   if (!data) throw Error('playSounds requires data.');
 
-  this.log('debug', 'received ' + data.previews.length + ' previews.');
+  this.log('debug', 'received ' + data.previews.length + ' preview urls');
 
   var previews = data.previews;
 
@@ -84,7 +86,10 @@ FSClient.prototype.playSounds = function(data) {
 FSClient.prototype.handleGetSounds = function(data) {
   if (!data) throw Error('handleGetSounds requires data.');
 
-  this.log('debug', 'fetching ' + data.data.results.length + ' sounds. ' + data.data.count + ' total sounds.');
+  if (!this.totalSoundsPlayed) {
+      this.log('info', data.data.count + ' total sounds');
+  }
+  this.log('debug', 'received ' + data.data.results.length + ' sound ids');
 
   var deferred = Q.defer();
 
@@ -197,10 +202,14 @@ FSClient.prototype.handleMakeQuery = function(deferred, error, response, body) {
 FSClient.prototype.handlePlaylistEnd = function(error) {
   if (error) throw new Error('handlePlaylistEnd', error);
   this.log('debug', 'playlist ended');
+  this.log('info', 'played ' + this.totalSoundsPlayed + ' total sounds');
   var totalPages = Math.ceil(this.count / this.page_size);
   if (this.page === totalPages) {
     this.page = 1;
     this.player = null;
+    this.log('info', 'played all available sounds');
+    this.log('info', 'resetting player');
+    this.log('info', 'setting current page to 1');
   } else {
     this.page++;
   }
@@ -220,7 +229,8 @@ FSClient.prototype.addPlayerEvents = function() {
  * @param  {Object} song A map of properties representing a song.
  */
 FSClient.prototype.handlePlayerPlaying = function(song) {
-  this.log('info', 'playing: ' + song.src);
+  this.log('info', 'playing ' + song.src.replace(this.basePreviewURL, ''));
+  this.totalSoundsPlayed++; // TODO: test this
 };
 
 /**
