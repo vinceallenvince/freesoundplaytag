@@ -3,7 +3,7 @@ var request = require('request');
 var Player = require('player');
 var fs = require('fs');
 var Log = require('log');
-var log = new Log('debug', fs.createWriteStream('fsclient.log'));
+var log = new Log('debug', fs.createWriteStream('logs/fsclient' + Date.now() + '.log'));
 
 /**
  * Creates a new FSClient. An FSClient makes queries against
