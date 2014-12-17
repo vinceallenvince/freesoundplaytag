@@ -65,9 +65,10 @@ FSClient.prototype.getSounds = function() {
  * @param {Object} data An a array of preview urls.
  */
 FSClient.prototype.playSounds = function(data) {
+
   if (!data) {
-    this.logger.error('FSClient.playSounds missing data argument');
-    throw Error('playSounds requires data.');
+    var msg = 'FSClient.playSounds missing data argument';
+    this.fail({message: msg});
   }
   this.logger.debug('received %d preview urls', data.previews.length);
 
@@ -91,7 +92,11 @@ FSClient.prototype.playSounds = function(data) {
  * @param {Object} data Response from freesound api.
  */
 FSClient.prototype.handleGetSounds = function(data) {
-  if (!data) throw Error('handleGetSounds requires data.');
+
+  if (!data) {
+    var msg = 'FSClient.handleGetSounds missing data argument';
+    this.fail({message: msg});
+  }
 
   if (!this.totalSoundsPlayed) {
       this.logger.info('%d total sounds for tag \'%s\'', data.data.count, this.tag);
@@ -123,8 +128,11 @@ FSClient.prototype.handleGetSounds = function(data) {
  * @throws {Error} If data is not passed.
  */
 FSClient.prototype.getPreviewsAll = function(data) {
-  if (!data) throw Error('getPreviewsAll requires data.');
 
+  if (!data) {
+    var msg = 'FSClient.getPreviewsAll missing data argument';
+    this.fail({message: msg});
+  }
   var deferred = Q.defer();
 
   var soundIds = data.soundIds;
@@ -157,7 +165,10 @@ FSClient.prototype.getPreviewsAll = function(data) {
  * @param  {Object} data     A map of properties.
  */
 FSClient.prototype.handleGetPreviewsAll = function(deferred, data) {
-  if (!data) throw Error('handleGetPreviewsAll requires data.');
+  if (!data) {
+    var msg = 'FSClient.handleGetPreviewsAll missing data argument';
+    this.fail({message: msg});
+  }
 
   var previews = [];
   for (var i = 0, max = data.length; i < max; i++) {
@@ -176,7 +187,12 @@ FSClient.prototype.handleGetPreviewsAll = function(deferred, data) {
  * @return {Object}          A promise.
  */
 FSClient.prototype.makeQuery = function(endpoint, query) {
-  if (!endpoint || !query) throw Error('makeQuery requires endpoint and query arguments.');
+
+  if (!endpoint || !query) {
+    var msg = 'FSClient.makeQuery requires endpoint and query arguments';
+    this.fail({message: msg});
+  }
+
   var deferred = Q.defer();
   var key = "&token=" + this.apikey;
   request(this.baseURL + endpoint + query + key, this.handleMakeQuery.bind(this, deferred));
@@ -263,6 +279,7 @@ FSClient.prototype.handlePlayerError = function(error) {
 FSClient.prototype.fail = function(error) {
   var msg = error ? error.message : 'unknown error';
   this.logger.error('FSClient.fail ', msg);
+  throw new Error('FSClient.fail ', msg);
 };
 
 module.exports = FSClient;

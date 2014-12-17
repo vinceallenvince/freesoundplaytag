@@ -313,7 +313,10 @@ describe('FSClient', function() {
     it('Logs currently playing song.', function() {
       var fsc = new FSClient();
       var stubLog = sinon.stub(fsc.logger, 'error');
-      fsc.fail({message: 'error!'});
+      var fnA = function() {
+        fsc.fail({message: 'error!'});
+      };
+      expect(fnA).to.throwError();
       expect(stubLog.called).to.be(true);
       sinon.restore(fsc.logger, 'error');
     });
