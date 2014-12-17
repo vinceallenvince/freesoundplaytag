@@ -140,8 +140,16 @@ describe('FSClient', function() {
       }
       expect(fnA).to.throwError();
 
-      var promise = fsc.handleGetSounds(data);
+      fsc.handleGetSounds(data);
       expect(fsc.count).to.be(345);
+
+      //
+      fsc.totalSoundsPlayed = 100;
+      var spyLog = sinon.spy(fsc.logger, 'debug');
+      fsc.handleGetSounds(data);
+      expect(spyLog.calledOnce).to.be(true);
+
+      fsc.logger.debug.restore();
     });
   });
 
@@ -282,10 +290,10 @@ describe('FSClient', function() {
 
     it('Logs currently playing song.', function() {
       var fsc = new FSClient();
-      var stubLog = sinon.stub(fsc, 'log');
+      var stubLog = sinon.stub(fsc.logger, 'info');
       fsc.handlePlayerPlaying({src: 'http://mypreviews/1.mp3'});
       expect(stubLog.called).to.be(true);
-      sinon.restore(fsc, 'log');
+      sinon.restore(fsc.logger, 'info');
     });
   });
 
@@ -293,10 +301,10 @@ describe('FSClient', function() {
 
     it('Logs currently playing song.', function() {
       var fsc = new FSClient();
-      var stubLog = sinon.stub(fsc, 'log');
+      var stubLog = sinon.stub(fsc.logger, 'error');
       fsc.handlePlayerError({message: 'error!'});
       expect(stubLog.called).to.be(true);
-      sinon.restore(fsc, 'log');
+      sinon.restore(fsc.logger, 'error');
     });
   });
 
@@ -304,18 +312,11 @@ describe('FSClient', function() {
 
     it('Logs currently playing song.', function() {
       var fsc = new FSClient();
-      var stubLog = sinon.stub(fsc, 'log');
+      var stubLog = sinon.stub(fsc.logger, 'error');
       fsc.fail({message: 'error!'});
       expect(stubLog.called).to.be(true);
-      sinon.restore(fsc, 'log');
+      sinon.restore(fsc.logger, 'error');
     });
   });
 
-  describe('log', function() {
-    // TODO: test against log module
-    it('Logs messages to the console.', function() {
-      var fsc = new FSClient();
-      fsc.log('error!');
-    });
-  });
 });
