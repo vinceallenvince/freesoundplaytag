@@ -6,15 +6,20 @@ Create a Raspberry Pi audio player that plays sounds files from the freesound.or
 
 You'll want to setup your RPi's SD Card following [these steps](https://gist.github.com/vinceallenvince/7cae6fcfc78091475e81). Follow the instructions to use NodeJS and the 'player' npm module.
 
-If you want the player to auto-start when you boot up the RPi, you'll also want to create a file in your RPi's /home/pi folder called start.sh. 
-
+Clone this repo to your home folder.
 ```
-#!/bin/bash
-( cd /home/pi/freesoundplaytag
-node main.js
-)
+git clone https://github.com/vinceallenvince/freesoundplaytag.git
 ```
 
-You also need to run this file on login. Follow [these instructions](http://www.opentechguides.com/how-to/article/raspberry-pi/5/raspberry-pi-auto-start.html).
+Install the node modules.
+```
+cd freesoundplaytag
+npm install
+```
 
-You'll also need to run that script as root. Follow [these instructions](http://askubuntu.com/questions/167847/how-to-run-bash-script-as-root-with-no-password) to setup the permissions.
+If you want the player to auto-start when you boot up the RPi, add this like to the bottom of your /etc/profile file.
+```
+/opt/node/bin/node /home/pi/freesoundplaytag/main.js
+```
+
+You also need the pi to auto login. Follow [these instructions](http://raspberrypi.stackexchange.com/questions/3873/auto-login-with-gui-disabled-in-raspbian).
