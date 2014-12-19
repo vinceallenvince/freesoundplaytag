@@ -7,6 +7,8 @@ var page = 1;
 var page_size = config.page_size;
 var logging = config.logging;
 
+console.log('starting app...');
+
 var FSClient = require('./src/fsclient');
 var fsc = new FSClient();
 fsc.init(API_KEY, tag, page, page_size, logging);
