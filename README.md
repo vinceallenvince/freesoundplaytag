@@ -1,6 +1,12 @@
 #Freesoundplaytag
 
-Create a Raspberry Pi audio player that plays sounds files from the freesound.org api.
+Create a Raspberry Pi audio player that plays sounds files from the [freesound.org](http://www.freesound.org) api based on a tag.
+
+##Config
+
+Copy the _config.js file as config.js and add a tag to describe the sounds you want to play... like "dogs", "ocean", "ambient", etc.
+
+Also add your [freesound api key](https://www.freesound.org/api/apply/).
 
 ##Setup
 
