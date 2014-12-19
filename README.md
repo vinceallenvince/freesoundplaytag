@@ -1,6 +1,6 @@
 #Freesoundplaytag
 
-This project turns a Raspberry Pi into an audio player that plays sounds files from the freesound.org api.
+Create a Raspberry Pi audio player that plays sounds files from the freesound.org api.
 
 ##Setup
 
