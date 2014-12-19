@@ -5,7 +5,6 @@ var fs = require('fs');
 var Log = require('log');
 var path = require('path');
 var appDir = path.dirname(require.main.filename);
-console.log(appDir);
 
 // TODO: check if we should delete some log files
 
