@@ -37,7 +37,7 @@ FSClient.prototype.init = function(apikey, opt_tag, opt_page, opt_page_size, opt
   this.page_size = opt_page_size || 15;
   this.logging = !!opt_logging;
   if (this.logging) {
-    this.logger = new Log('debug', fs.createWriteStream('logs/fsclient' + Date.now() + '.log'));
+    this.logger = new Log('debug', fs.createWriteStream(process.cwd() + '/logs/fsclient' + Date.now() + '.log'));
   }
 };
 
