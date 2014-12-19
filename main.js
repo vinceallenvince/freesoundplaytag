@@ -7,7 +7,10 @@ var page = 1;
 var page_size = config.page_size;
 var logging = config.logging;
 
-console.log('starting app...');
+console.log('starting app');
+if (logging) {
+  console.log('logging messages to /logs');
+}
 
 var FSClient = require('./src/fsclient');
 var fsc = new FSClient();
