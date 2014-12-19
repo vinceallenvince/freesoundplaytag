@@ -4,7 +4,7 @@ Create a Raspberry Pi audio player that plays sounds files from the freesound.or
 
 ##Setup
 
-You'll want to setup your RPi's SD Card following these steps. Follow the instructions to use NodeJS and the 'player' npm module.
+You'll want to setup your RPi's SD Card following [these steps](https://gist.github.com/vinceallenvince/7cae6fcfc78091475e81). Follow the instructions to use NodeJS and the 'player' npm module.
 
 If you want the player to auto-start when you boot up the RPi, you'll also want to create a file in your RPi's /home/pi folder called start.sh. 
 
