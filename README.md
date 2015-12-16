@@ -87,7 +87,7 @@ Make sure you've configured an Internet connection before proceeding.
     sudo /opt/node/bin/npm install -g node-gyp
     ```
 
- * Get [libasound2-dev](https://packages.debian.org/search?keywords=libasound2-dev).
+* Get [libasound2-dev](https://packages.debian.org/search?keywords=libasound2-dev).
 
     ```
     sudo apt-get install libasound2-dev
